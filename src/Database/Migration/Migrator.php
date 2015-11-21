@@ -1,5 +1,6 @@
 <?php namespace Anomaly\Streams\Platform\Database\Migration;
 
+use Anomaly\Streams\Platform\Addon\Addon;
 use Anomaly\Streams\Platform\Database\Migration\Command\Migrate;
 use Anomaly\Streams\Platform\Database\Migration\Command\Rollback;
 use Anomaly\Streams\Platform\Database\Migration\Command\TransformMigrationNameToClass;
@@ -124,6 +125,7 @@ class Migrator extends \Illuminate\Database\Migrations\Migrator
 
         $addons = app('Anomaly\Streams\Platform\Addon\AddonCollection');
 
+        /* @var Addon $addon */
         if ($addon = $addons->get($namespace)) {
             $path = $addon->getPath('migrations/') . $file . '.php';
         } else {
@@ -145,6 +147,10 @@ class Migrator extends \Illuminate\Database\Migrations\Migrator
     public function resolve($file)
     {
         $this->requireOnce($file);
+
+        if (!str_is('*.*.*', $file)) {
+            return parent::resolve($file);
+        }
 
         return app($this->dispatch(new TransformMigrationNameToClass($this->removeDatePrefix($file))));
     }
@@ -194,6 +200,41 @@ class Migrator extends \Illuminate\Database\Migrations\Migrator
         if (count($migrations) == 0) {
 
             $this->note("<info>Nothing to rollback: {$namespace}</info>");
+
+            return count($migrations);
+        }
+
+        // We need to reverse these migrations so that they are "downed" in reverse
+        // to what they run on "up". It lets us backtrack through the migrations
+        // and properly reverse the entire database schema operation that ran.
+        foreach ($migrations as $migration) {
+            $this->runDown((object)$migration, $pretend);
+        }
+
+        return count($migrations);
+    }
+
+    /**
+     * Rollback the last migration operation.
+     *
+     * @param       $namespace
+     * @param  bool $pretend
+     * @return int
+     */
+    public function rollbackPackage($path, $pretend = false)
+    {
+        $this->notes = [];
+
+        // We want to pull in the last batch of migrations that ran on the previous
+        // migration operation. We'll then reverse those migrations and run each
+        // of them "down" to reverse the last migration "operation" which ran.
+        $migrations = $this->repository->findManyByFiles($files = $this->getMigrationFiles($path));
+
+        $this->requireFiles($path, $files);
+
+        if (count($migrations) == 0) {
+
+            $this->note("<info>Nothing to rollback: {$path}</info>");
 
             return count($migrations);
         }

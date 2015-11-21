@@ -33,7 +33,7 @@ class EloquentQueryBuilder extends Builder
     {
         $this->orderByDefault();
 
-        if (!env('APP_DEBUG')) {
+        /*if (!env('APP_DEBUG') || env('DB_CACHE')) {
 
             $this->rememberIndex();
 
@@ -46,7 +46,7 @@ class EloquentQueryBuilder extends Builder
                     }
                 );
             }
-        }
+        }*/
 
         return parent::get($columns);
     }
@@ -148,8 +148,14 @@ class EloquentQueryBuilder extends Builder
         $model = $this->getModel();
         $query = $this->getQuery();
 
-        if ($query->orders === null && ($model instanceof EntryInterface || $model instanceof AssignmentModel)) {
-            $query->orderBy('sort_order', 'ASC');
+        if ($query->orders === null) {
+            if ($model instanceof AssignmentModel) {
+                $query->orderBy('sort_order', 'ASC');
+            } elseif ($model instanceof EntryInterface) {
+                if ($model->getStream()->isSortable()) {
+                    $query->orderBy('sort_order', 'ASC');
+                }
+            }
         }
     }
 }

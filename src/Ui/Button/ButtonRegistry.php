@@ -20,94 +20,136 @@ class ButtonRegistry
         /**
          * Default Buttons
          */
-        'default'   => [
+        'default'     => [
             'type' => 'default'
-        ],
-        'settings'  => [
-            'icon' => 'cog',
-            'type' => 'default',
-            'text' => 'streams::button.settings'
-        ],
-        'configure' => [
-            'icon' => 'cog',
-            'type' => 'default',
-            'text' => 'streams::button.configure'
         ],
         /**
          * Link Buttons
          */
-        'cancel'    => [
+        'cancel'      => [
             'text' => 'streams::button.cancel',
             'type' => 'link'
         ],
         /**
          * Success Buttons
          */
-        'green'     => [
+        'green'       => [
             'type' => 'success'
         ],
-        'success'   => [
+        'success'     => [
             'icon' => 'check',
             'type' => 'success'
         ],
-        'save'      => [
+        'save'        => [
             'text' => 'streams::button.save',
             'icon' => 'save',
             'type' => 'success'
         ],
-        'create'    => [
+        'create'      => [
             'text' => 'streams::button.create',
             'icon' => 'fa fa-asterisk',
             'type' => 'success'
         ],
-        'new'       => [
+        'new'         => [
             'icon' => 'fa fa-plus',
             'type' => 'success'
         ],
-        'add'       => [
+        'add'         => [
             'icon' => 'fa fa-plus',
             'type' => 'success'
         ],
-        'send'      => [
+        'send'        => [
             'text' => 'streams::button.send',
             'icon' => 'envelope',
             'type' => 'success'
         ],
-        'submit'    => [
+        'submit'      => [
             'text' => 'streams::button.submit',
             'type' => 'success'
+        ],
+        'install'     => [
+            'text' => 'streams::button.install',
+            'icon' => 'download',
+            'type' => 'success'
+        ],
+        'entries'     => [
+            'text' => 'streams::button.entries',
+            'icon' => 'list-ol',
+            'type' => 'success'
+        ],
+        'done'        => [
+            'text' => 'streams::button.done',
+            'type' => 'success',
+            'icon' => 'check'
+        ],
+        'select'      => [
+            'text' => 'streams::button.select',
+            'type' => 'success',
+            'icon' => 'check'
+        ],
+        'finish'      => [
+            'text' => 'streams::button.finish',
+            'type' => 'success',
+            'icon' => 'check'
+        ],
+        'finished'    => [
+            'text' => 'streams::button.finished',
+            'type' => 'success',
+            'icon' => 'check'
         ],
         /**
          * Info Buttons
          */
-        'blue'      => [
+        'blue'        => [
             'type' => 'info'
         ],
-        'info'      => [
+        'info'        => [
             'icon' => 'fa fa-info',
             'type' => 'info'
         ],
-        'view'      => [
+        'help'        => [
+            'icon'        => 'circle-question-mark',
+            'text'        => 'streams::button.help',
+            'type'        => 'info',
+            'data-toggle' => 'modal',
+            'data-target' => '#modal'
+        ],
+        'view'        => [
             'text' => 'streams::button.view',
             'icon' => 'fa fa-eye',
             'type' => 'info'
         ],
-        'fields'    => [
+        'fields'      => [
             'text' => 'streams::button.fields',
             'icon' => 'list-alt',
+            'type' => 'info'
+        ],
+        'assignments' => [
+            'text' => 'streams::button.fields',
+            'icon' => 'list-alt',
+            'type' => 'info'
+        ],
+        'settings'    => [
+            'text' => 'streams::button.settings',
+            'type' => 'info',
+            'icon' => 'cog',
+        ],
+        'configure'   => [
+            'text' => 'streams::button.configure',
+            'icon' => 'wrench',
             'type' => 'info'
         ],
         /**
          * Warning Buttons
          */
-        'orange'    => [
+        'orange'      => [
             'type' => 'warning'
         ],
-        'warning'   => [
+        'warning'     => [
             'icon' => 'warning',
             'type' => 'warning'
         ],
-        'edit'      => [
+        'edit'        => [
             'text' => 'streams::button.edit',
             'icon' => 'pencil',
             'type' => 'warning'
@@ -115,14 +157,14 @@ class ButtonRegistry
         /**
          * Danger Buttons
          */
-        'red'       => [
+        'red'         => [
             'type' => 'danger'
         ],
-        'danger'    => [
+        'danger'      => [
             'icon' => 'fa fa-exclamation-circle',
             'type' => 'danger'
         ],
-        'delete'    => [
+        'delete'      => [
             'text'       => 'streams::button.delete',
             'icon'       => 'trash',
             'type'       => 'danger',
@@ -131,19 +173,28 @@ class ButtonRegistry
                 'data-message' => 'streams::message.confirm_delete'
             ]
         ],
-        'confirm'   => [
+        'confirm'     => [
             'type'       => 'danger',
             'attributes' => [
                 'data-toggle'  => 'confirm',
                 'data-message' => 'streams::message.confirm_delete'
             ]
         ],
-        'prompt'    => [
+        'prompt'      => [
             'type'       => 'danger',
             'attributes' => [
                 'data-match'   => 'yes',
                 'data-toggle'  => 'prompt',
                 'data-message' => 'streams::message.prompt_delete'
+            ]
+        ],
+        'uninstall'   => [
+            'type'       => 'danger',
+            'icon'       => 'times-circle',
+            'text'       => 'streams::button.uninstall',
+            'attributes' => [
+                'data-toggle'  => 'confirm',
+                'data-message' => 'streams::message.confirm_uninstall'
             ]
         ]
     ];

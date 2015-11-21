@@ -37,7 +37,14 @@ class TreeBuilder
     protected $model = null;
 
     /**
-     * The buttons configuration.
+     * The item segments.
+     *
+     * @var array|string
+     */
+    protected $segments = [];
+
+    /**
+     * The item buttons.
      *
      * @var array|string
      */
@@ -150,6 +157,29 @@ class TreeBuilder
     }
 
     /**
+     * Set the segments.
+     *
+     * @param $segments
+     * @return $this
+     */
+    public function setSegments($segments)
+    {
+        $this->segments = $segments;
+
+        return $this;
+    }
+
+    /**
+     * Get the segments.
+     *
+     * @return array
+     */
+    public function getSegments()
+    {
+        return $this->segments;
+    }
+
+    /**
      * Set the buttons configuration.
      *
      * @param $buttons
@@ -190,7 +220,7 @@ class TreeBuilder
      */
     public function setOptions(array $options)
     {
-        $this->options = $options;
+        $this->options = array_merge($this->options, $options);
 
         return $this;
     }

@@ -42,7 +42,7 @@ class Authorizer
     }
 
     /**
-     * Authorize the active user against a permission.
+     * Authorize a user against a permission.
      *
      * @param               $permission
      * @param UserInterface $user
@@ -54,6 +54,74 @@ class Authorizer
             $user = $this->guard->user();
         }
 
+        if (!$user) {
+            return true; // Don't know about this.
+        }
+
+        return $this->checkPermission($permission, $user);
+    }
+
+    /**
+     * Authorize a user against any permission.
+     *
+     * @param array         $permissions
+     * @param UserInterface $user
+     * @return bool
+     */
+    public function authorizeAny(array $permissions, UserInterface $user = null)
+    {
+        if (!$user) {
+            $user = $this->guard->user();
+        }
+
+        if (!$user) {
+            return true; // Don't know about this.
+        }
+
+        foreach ($permissions as $permission) {
+            if ($this->checkPermission($permission, $user)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Authorize a user against all permission.
+     *
+     * @param array         $permissions
+     * @param UserInterface $user
+     * @return bool
+     */
+    public function authorizeAll(array $permissions, UserInterface $user = null)
+    {
+        if (!$user) {
+            $user = $this->guard->user();
+        }
+
+        if (!$user) {
+            return true; // Don't know about this.
+        }
+
+        foreach ($permissions as $permission) {
+            if (!$this->checkPermission($permission, $user)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Return a user's permission.
+     *
+     * @param               $permission
+     * @param UserInterface $user
+     * @return bool
+     */
+    protected function checkPermission($permission, UserInterface $user)
+    {
         /**
          * No permission, let it proceed.
          */

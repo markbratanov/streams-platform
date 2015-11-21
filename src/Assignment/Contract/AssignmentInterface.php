@@ -65,6 +65,13 @@ interface AssignmentInterface
     public function getLabel();
 
     /**
+     * Get the warning.
+     *
+     * @return string
+     */
+    public function getWarning();
+
+    /**
      * Get the instructions.
      *
      * @return string
@@ -112,6 +119,15 @@ interface AssignmentInterface
      * @return FieldType
      */
     public function getFieldType();
+
+    /**
+     * Get the field type value. This helps
+     * avoid spinning up a type instance
+     * if you don't really need it.
+     *
+     * @return string
+     */
+    public function getFieldTypeValue();
 
     /**
      * Get the assignment's field's name.

@@ -61,7 +61,7 @@ class FieldTypeBuilder
     public function build(array $parameters)
     {
 
-        $type = array_pull($parameters, 'type');
+        $type = array_get($parameters, 'type');
 
         /**
          * If the field type is a string and
@@ -94,7 +94,7 @@ class FieldTypeBuilder
         /**
          * If we don't have a field type let em know.
          */
-        if (!$type instanceof FieldType) {
+        if (!$type) {
             throw new \Exception("Field type [{$type}] not found.");
         }
 

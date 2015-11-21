@@ -48,6 +48,16 @@ class EloquentRepository implements EloquentRepositoryInterface
     }
 
     /**
+     * Return a new instance.
+     *
+     * @return EloquentModel
+     */
+    public function newInstance()
+    {
+        return $this->model->newInstance();
+    }
+
+    /**
      * Return a paginated collection.
      *
      * @param array $parameters
@@ -109,6 +119,17 @@ class EloquentRepository implements EloquentRepositoryInterface
     }
 
     /**
+     * Update multiple records.
+     *
+     * @param array $attributes
+     * @return bool
+     */
+    public function update(array $attributes = [])
+    {
+        return $this->model->update($attributes);
+    }
+
+    /**
      * Delete a record.
      *
      * @param EloquentModel $entry
@@ -117,5 +138,18 @@ class EloquentRepository implements EloquentRepositoryInterface
     public function delete(EloquentModel $entry)
     {
         return $entry->delete();
+    }
+
+    /**
+     * Set the repository model.
+     *
+     * @param EloquentModel $model
+     * @return $this
+     */
+    public function setModel(EloquentModel $model)
+    {
+        $this->model = $model;
+
+        return $this;
     }
 }

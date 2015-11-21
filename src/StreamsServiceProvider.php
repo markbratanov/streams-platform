@@ -12,6 +12,9 @@ use Anomaly\Streams\Platform\Assignment\AssignmentObserver;
 use Anomaly\Streams\Platform\Entry\Command\AutoloadEntryModels;
 use Anomaly\Streams\Platform\Entry\EntryModel;
 use Anomaly\Streams\Platform\Entry\EntryObserver;
+use Anomaly\Streams\Platform\Event\Booted;
+use Anomaly\Streams\Platform\Event\Booting;
+use Anomaly\Streams\Platform\Event\Ready;
 use Anomaly\Streams\Platform\Field\FieldModel;
 use Anomaly\Streams\Platform\Field\FieldObserver;
 use Anomaly\Streams\Platform\Image\Command\AddImageNamespaces;
@@ -79,11 +82,11 @@ class StreamsServiceProvider extends ServiceProvider
      */
     protected $commands = [
         'Anomaly\Streams\Platform\Asset\Console\Clear',
+        'Anomaly\Streams\Platform\Stream\Console\Make',
         'Anomaly\Streams\Platform\Stream\Console\Compile',
         'Anomaly\Streams\Platform\Stream\Console\Refresh',
         'Anomaly\Streams\Platform\Stream\Console\Cleanup',
         'Anomaly\Streams\Platform\Stream\Console\Destroy',
-        'Anomaly\Streams\Platform\Stream\Console\MakeEntity',
         'Anomaly\Streams\Platform\Addon\Console\MakeAddon',
         'Anomaly\Streams\Platform\Addon\Console\CacheAddons',
         'Anomaly\Streams\Platform\Addon\Console\ClearAddons',
@@ -92,7 +95,9 @@ class StreamsServiceProvider extends ServiceProvider
         'Anomaly\Streams\Platform\Addon\Module\Console\Reinstall',
         'Anomaly\Streams\Platform\Addon\Extension\Console\Install',
         'Anomaly\Streams\Platform\Addon\Extension\Console\Uninstall',
-        'Anomaly\Streams\Platform\Addon\Extension\Console\Reinstall'
+        'Anomaly\Streams\Platform\Addon\Extension\Console\Reinstall',
+        'Anomaly\Streams\Platform\Installer\Console\InstallStreams',
+        'Anomaly\Streams\Platform\Application\Console\EnvSet',
     ];
 
     /**
@@ -102,6 +107,8 @@ class StreamsServiceProvider extends ServiceProvider
      */
     protected $bindings = [
         'Illuminate\Contracts\Debug\ExceptionHandler'                                    => 'Anomaly\Streams\Platform\Exception\ExceptionHandler',
+        'Illuminate\Routing\UrlGenerator'                                                => 'Anomaly\Streams\Platform\Routing\UrlGenerator',
+        'Illuminate\Contracts\Routing\UrlGenerator'                                      => 'Anomaly\Streams\Platform\Routing\UrlGenerator',
         'Anomaly\Streams\Platform\Entry\EntryModel'                                      => 'Anomaly\Streams\Platform\Entry\EntryModel',
         'Anomaly\Streams\Platform\Entry\Contract\EntryRepositoryInterface'               => 'Anomaly\Streams\Platform\Entry\EntryRepository',
         'Anomaly\Streams\Platform\Field\FieldModel'                                      => 'Anomaly\Streams\Platform\Field\FieldModel',
@@ -162,7 +169,6 @@ class StreamsServiceProvider extends ServiceProvider
         'Anomaly\Streams\Platform\Addon\Module\Listener\PutModuleInCollection'         => 'Anomaly\Streams\Platform\Addon\Module\Listener\PutModuleInCollection',
         'Anomaly\Streams\Platform\Addon\Extension\ExtensionCollection'                 => 'Anomaly\Streams\Platform\Addon\Extension\ExtensionCollection',
         'Anomaly\Streams\Platform\Addon\Extension\Listener\PutExtensionInCollection'   => 'Anomaly\Streams\Platform\Addon\Extension\Listener\PutExtensionInCollection',
-        'Anomaly\Streams\Platform\Addon\FieldType\FieldTypeAccessor'                   => 'Anomaly\Streams\Platform\Addon\FieldType\FieldTypeAccessor',
         'Anomaly\Streams\Platform\Addon\FieldType\FieldTypeModifier'                   => 'Anomaly\Streams\Platform\Addon\FieldType\FieldTypeModifier',
         'Anomaly\Streams\Platform\Addon\FieldType\FieldTypeCollection'                 => 'Anomaly\Streams\Platform\Addon\FieldType\FieldTypeCollection',
         'Anomaly\Streams\Platform\Addon\FieldType\Listener\PutFieldTypeInCollection'   => 'Anomaly\Streams\Platform\Addon\FieldType\Listener\PutFieldTypeInCollection',
@@ -183,8 +189,10 @@ class StreamsServiceProvider extends ServiceProvider
     /**
      * Boot the service provider.
      */
-    public function boot()
+    public function boot(Dispatcher $events)
     {
+        $events->fire(new Booting());
+
         $this->dispatch(new SetCoreConnection());
         $this->dispatch(new ConfigureCommandBus());
         $this->dispatch(new ConfigureTranslator());
@@ -203,7 +211,9 @@ class StreamsServiceProvider extends ServiceProvider
         AssignmentModel::observe(AssignmentObserver::class);
 
         $this->app->booted(
-            function () {
+            function () use ($events) {
+
+                $events->fire(new Booted());
 
                 /* @var AddonManager $manager */
                 $manager = $this->app->make('Anomaly\Streams\Platform\Addon\AddonManager');
@@ -226,6 +236,8 @@ class StreamsServiceProvider extends ServiceProvider
                 );
 
                 $manager->register();
+
+                $events->fire(new Ready());
             }
         );
     }

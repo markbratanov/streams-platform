@@ -54,6 +54,7 @@ class AssignmentModel extends EloquentModel implements AssignmentInterface
      */
     protected $translatedAttributes = [
         'label',
+        'warning',
         'placeholder',
         'instructions'
     ];
@@ -117,9 +118,13 @@ class AssignmentModel extends EloquentModel implements AssignmentInterface
      */
     public function getFieldSlug()
     {
+        if (isset($this->cache['field_slug']) && $this->cache['field_slug']) {
+            return $this->cache['field_slug'];
+        }
+
         $field = $this->getField();
 
-        return $field->getSlug();
+        return $this->cache['field_slug'] = $field->getSlug();
     }
 
     /**
@@ -145,6 +150,20 @@ class AssignmentModel extends EloquentModel implements AssignmentInterface
         $type->setRequired($this->isRequired());
 
         return $type;
+    }
+
+    /**
+     * Get the field type value. This helps
+     * avoid spinning up a type instance
+     * if you don't really need it.
+     *
+     * @return string
+     */
+    public function getFieldTypeValue()
+    {
+        $field = $this->getField();
+
+        return $field->getTypeValue();
     }
 
     /**
@@ -190,11 +209,15 @@ class AssignmentModel extends EloquentModel implements AssignmentInterface
      */
     public function getConfig()
     {
-        if (is_array($this->attributes['config'])) {
-            return $this->attributes['config'];
+        if (isset($this->cache['config']) && $this->cache['config']) {
+            return $this->cache['config'];
         }
 
-        return $this->attributes['config'] = $this->config;
+        if (is_array($this->attributes['config'])) {
+            return $this->cache['config'] = $this->attributes['config'];
+        }
+
+        return $this->cache['config'] = $this->attributes['config'] = $this->config;
     }
 
     /**
@@ -205,6 +228,16 @@ class AssignmentModel extends EloquentModel implements AssignmentInterface
     public function getLabel()
     {
         return $this->label;
+    }
+
+    /**
+     * Get the warning.
+     *
+     * @return string
+     */
+    public function getWarning()
+    {
+        return $this->warning;
     }
 
     /**

@@ -26,7 +26,7 @@ interface EloquentRepositoryInterface
      * Find a record by it's ID.
      *
      * @param $id
-     * @return EloquentModel
+     * @return null|EloquentModel
      */
     public function find($id);
 
@@ -37,6 +37,13 @@ interface EloquentRepositoryInterface
      * @return EloquentModel
      */
     public function create(array $attributes);
+
+    /**
+     * Return a new instance.
+     *
+     * @return EloquentModel
+     */
+    public function newInstance();
 
     /**
      * Return a paginated collection.
@@ -55,10 +62,26 @@ interface EloquentRepositoryInterface
     public function save(EloquentModel $entry);
 
     /**
+     * Update multiple records.
+     *
+     * @param array $attributes
+     * @return bool
+     */
+    public function update(array $attributes = []);
+
+    /**
      * Delete a record.
      *
      * @param EloquentModel $entry
      * @return bool
      */
     public function delete(EloquentModel $entry);
+
+    /**
+     * Set the repository model.
+     *
+     * @param EloquentModel $model
+     * @return $this
+     */
+    public function setModel(EloquentModel $model);
 }

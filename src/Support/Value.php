@@ -3,7 +3,6 @@
 use Anomaly\Streams\Platform\Entry\Contract\EntryInterface;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use StringTemplate\Engine;
 
 /**
  * Class Value
@@ -17,9 +16,16 @@ class Value
 {
 
     /**
+     * The string renderer.
+     *
+     * @var String
+     */
+    protected $string;
+
+    /**
      * The string parser.
      *
-     * @var Engine
+     * @var Parser
      */
     protected $parser;
 
@@ -40,12 +46,14 @@ class Value
     /**
      * Create a new ColumnValue instance.
      *
-     * @param Engine    $parser
+     * @param String    $string
+     * @param Parser    $parser
      * @param Evaluator $evaluator
      * @param Decorator $decorator
      */
-    public function __construct(Engine $parser, Evaluator $evaluator, Decorator $decorator)
+    public function __construct(String $string, Parser $parser, Evaluator $evaluator, Decorator $decorator)
     {
+        $this->string    = $string;
         $this->parser    = $parser;
         $this->evaluator = $evaluator;
         $this->decorator = $decorator;
@@ -54,16 +62,22 @@ class Value
     /**
      * Make a value from the parameters and entry.
      *
-     * @param $parameters
-     * @param $payload
+     * @param       $parameters
+     * @param       $payload
+     * @param array $payload
      * @return mixed|string
      */
-    public function make($parameters, $entry, $term = 'entry')
+    public function make($parameters, $entry, $term = 'entry', $payload = [])
     {
+        $payload[$term] = $entry;
+
+        /**
+         * If a flat value was sent in
+         * then convert it to an array.
+         */
         if (is_string($parameters)) {
             $parameters = [
-                'wrapper' => '{value}',
-                'value'   => $parameters
+                'value' => $parameters
             ];
         }
 
@@ -114,7 +128,7 @@ class Value
          * sending to decorate so that data_get()
          * can get into the presenter methods.
          */
-        $entry = $this->decorator->decorate($entry);
+        $payload[$term] = $entry = $this->decorator->decorate($entry);
 
         /**
          * If the value matches a method in the presenter.
@@ -125,11 +139,13 @@ class Value
             }
         }
 
+        $payload[$term] = $entry;
+
         /**
          * By default we can just pass the value through
          * the evaluator utility and be done with it.
          */
-        $value = $this->evaluator->evaluate($value, [$term => $entry]);
+        $value = $this->evaluator->evaluate($value, $payload);
 
         /**
          * Lastly, prepare the entry to be
@@ -137,21 +153,45 @@ class Value
          */
         if ($entry instanceof Arrayable) {
             $entry = $entry->toArray();
-        } else {
-            $entry = null;
         }
 
         /**
          * Parse the value with the entry.
          */
-        $value = $this->parser->render($parameters['wrapper'], ['value' => $value, $term => $entry]);
+        if ($wrapper = array_get($parameters, 'wrapper')) {
+            $value = $this->parser->parse(
+                $wrapper,
+                ['value' => $value, $term => $entry]
+            );
+        }
+
+        /**
+         * Parse the value with the value too.
+         */
+        if (is_string($value)) {
+            $value = $this->parser->parse(
+                $value,
+                [
+                    'value' => $value,
+                    $term   => $entry
+                ]
+            );
+        }
 
         /**
          * If the value looks like a language
          * key then try translating it.
          */
-        if (str_is('*.*.*::*', $value)) {
+        if (is_string($value) && str_is('*.*.*::*', $value)) {
             $value = trans($value);
+        }
+
+        /**
+         * If the value looks like a renderable
+         * string then render it.
+         */
+        if (is_string($value) && str_contains($value, '{{')) {
+            $value = $this->string->render($value, [$term => $entry]);
         }
 
         return $value;

@@ -19,6 +19,7 @@ use Anomaly\Streams\Platform\Ui\Form\Command\SaveForm;
 use Anomaly\Streams\Platform\Ui\Form\Command\SetFormResponse;
 use Anomaly\Streams\Platform\Ui\Form\Component\Action\ActionCollection;
 use Anomaly\Streams\Platform\Ui\Form\Contract\FormRepositoryInterface;
+use Closure;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Support\MessageBag;
 use Symfony\Component\HttpFoundation\Response;
@@ -134,6 +135,13 @@ class FormBuilder
      * @var bool
      */
     protected $save = true;
+
+    /**
+     * The read only flag.
+     *
+     * @var bool
+     */
+    protected $readOnly = false;
 
     /**
      * The form object.
@@ -578,6 +586,19 @@ class FormBuilder
     }
 
     /**
+     * Merge in options.
+     *
+     * @param array|string $options
+     * @return $this
+     */
+    public function mergeOptions($options)
+    {
+        $this->options = array_merge($this->options, $options);
+
+        return $this;
+    }
+
+    /**
      * Get the sections.
      *
      * @return array
@@ -590,7 +611,7 @@ class FormBuilder
     /**
      * Set the sections.
      *
-     * @param array $sections
+     * @param array|Closure $sections
      * @return $this
      */
     public function setSections($sections)
@@ -620,6 +641,7 @@ class FormBuilder
      * @param       $section
      * @param       $slug
      * @param array $tab
+     * @return $this
      */
     public function addSectionTab($section, $slug, array $tab)
     {
@@ -1114,5 +1136,28 @@ class FormBuilder
     public function canSave()
     {
         return $this->save;
+    }
+
+    /**
+     * Set the read only flag.
+     *
+     * @param $readOnly
+     * @return $this
+     */
+    public function setReadOnly($readOnly)
+    {
+        $this->readOnly = $readOnly;
+
+        return $this;
+    }
+
+    /**
+     * Return the read only flag.
+     *
+     * @return bool
+     */
+    public function isReadOnly()
+    {
+        return $this->readOnly;
     }
 }

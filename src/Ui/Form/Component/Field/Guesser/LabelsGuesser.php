@@ -1,6 +1,5 @@
 <?php namespace Anomaly\Streams\Platform\Ui\Form\Component\Field\Guesser;
 
-use Anomaly\Streams\Platform\Assignment\Contract\AssignmentInterface;
 use Anomaly\Streams\Platform\Ui\Form\FormBuilder;
 
 /**
@@ -26,10 +25,17 @@ class LabelsGuesser
 
         foreach ($fields as &$field) {
 
+            $locale = array_get($field, 'locale');
+
             /**
              * If the label is already set then use it.
              */
             if (isset($field['label'])) {
+
+                if (str_is('*::*', $field['label'])) {
+                    $field['label'] = trans($field['label'], [], null, $locale);
+                }
+
                 continue;
             }
 
@@ -45,7 +51,7 @@ class LabelsGuesser
              * No stream means we can't
              * really do much here.
              */
-            if (!$stream) {
+            if (!$stream || !$stream->getAssignment($field['field'])) {
 
                 $key = "module::field.{$field['field']}";
 
@@ -53,6 +59,10 @@ class LabelsGuesser
                     $field['label'] = "{$key}.name";
                 } else {
                     $field['label'] = "{$key}.label";
+                }
+
+                if (str_is('*::*', $field['label'])) {
+                    $field['label'] = trans($field['label'], [], null, $locale);
                 }
 
                 continue;
@@ -64,7 +74,7 @@ class LabelsGuesser
              * No assignment means we still do
              * not have anything to do here.
              */
-            if (!$assignment instanceof AssignmentInterface) {
+            if (!$assignment) {
                 continue;
             }
 
@@ -72,12 +82,27 @@ class LabelsGuesser
              * Try using the assignment label if available
              * otherwise use the field name as the label.
              */
-            if (trans()->has($label = $assignment->getLabel(), array_get($field, 'locale'))) {
-                $field['label'] = trans($label, [], null, array_get($field, 'locale'));
-            } elseif ($label && !str_is('*.*.*::*', $label)) {
+            $label = $assignment->getLabel();
+
+            if (str_is('*::*', $label) && trans()->has($label, $locale)) {
+                $field['label'] = trans($label, [], null, $locale);
+            }
+
+            if (!isset($field['label']) && $label && !str_is('*::*', $label)) {
                 $field['label'] = $label;
-            } elseif (trans()->has($name = $assignment->getFieldName(), array_get($field, 'locale'))) {
-                $field['label'] = trans($name, [], null, array_get($field, 'locale'));
+            }
+
+            if (!isset($field['label'])) {
+
+                $label = $assignment->getFieldName();
+
+                if (str_is('*::*', $label) && trans()->has($label, $locale)) {
+                    $field['label'] = trans($label, [], null, $locale);
+                }
+            }
+
+            if (!isset($field['label'])) {
+                $field['label'] = $label;
             }
         }
 

@@ -1,15 +1,14 @@
-{{ asset_add("scripts.js", "streams::js/form/form.js") }}
 {{ asset_add("scripts.js", "streams::js/form/translations.js") }}
 
 {% block content %}
 
-    <div class="container-fluid">
+    <div class="{{ form.options.container_class }}">
 
-        {{ form_open({'enctype': 'multipart/form-data', 'url': form.options.url ?: url_full()}) }}
+        {{ form_open({'class': 'form', 'enctype': 'multipart/form-data', 'url': form.options.url ?: url_full()}) }}
 
         {# Chrome Autocomplete Fix #}
         <input style="display:none">
-        <input type="password" style="display:none">
+        <input type="password" style="display:none; visibility: hidden;">
 
         {{ view("streams::form/partials/translations", {'form': form}) }}
         {{ view("streams::form/partials/heading", {'form': form}) }}

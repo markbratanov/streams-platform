@@ -30,6 +30,13 @@ class AddonProvider
     protected $cached = [];
 
     /**
+     * The registered providers.
+     *
+     * @var array
+     */
+    protected $providers = [];
+
+    /**
      * The router instance.
      *
      * @var Router
@@ -127,7 +134,7 @@ class AddonProvider
             return;
         }
 
-        $provider = new $provider($this->application, $addon);
+        $this->providers[] = $provider = new $provider($this->application, $addon);
 
         $this->bindClasses($provider);
         $this->bindSingletons($provider);
@@ -141,10 +148,25 @@ class AddonProvider
         $this->registerSchedules($provider);
         $this->registerProviders($provider);
         $this->registerMiddleware($provider);
-        $this->registerAdditionalRoutes($provider);
+        $this->registerRouteMiddleware($provider);
 
         if (method_exists($provider, 'register')) {
             $this->application->call([$provider, 'register']);
+        }
+    }
+
+    /**
+     * Boot the service providers.
+     */
+    public function boot()
+    {
+        foreach ($this->providers as $provider) {
+
+            if (method_exists($provider, 'boot')) {
+                $this->application->call([$provider, 'boot']);
+            }
+
+            $this->registerAdditionalRoutes($provider);
         }
     }
 
@@ -342,11 +364,21 @@ class AddonProvider
      */
     protected function registerMiddleware(AddonServiceProvider $provider)
     {
-        if (!$middleware = $provider->getMiddleware()) {
-            return;
+        foreach ($provider->getMiddleware() as $middleware) {
+            $this->middlewares->push($middleware);
         }
+    }
 
-        $this->middlewares->merge($middleware);
+    /**
+     * Register route middleware.
+     *
+     * @param AddonServiceProvider $provider
+     */
+    protected function registerRouteMiddleware(AddonServiceProvider $provider)
+    {
+        foreach ($provider->getRouteMiddleware() as $name => $class) {
+            $this->router->middleware($name, $class);
+        }
     }
 
     /**
@@ -361,7 +393,15 @@ class AddonProvider
         }
 
         if (method_exists($provider, 'map')) {
-            $this->application->call([$provider, 'map']);
+            try {
+                $this->application->call([$provider, 'map']);
+            } catch (\Exception $e) {
+                /**
+                 * If, for whatever reason, this fails let
+                 * it fail silently. Mapping additional routes
+                 * could be volatile at certain application states.
+                 */
+            }
         }
     }
 

@@ -6,6 +6,7 @@ use Anomaly\Streams\Platform\Assignment\AssignmentCollection;
 use Anomaly\Streams\Platform\Assignment\Contract\AssignmentInterface;
 use Anomaly\Streams\Platform\Entry\EntryPresenter;
 use Anomaly\Streams\Platform\Field\Contract\FieldInterface;
+use Anomaly\Streams\Platform\Model\EloquentCollection;
 use Anomaly\Streams\Platform\Stream\Contract\StreamInterface;
 use Carbon\Carbon;
 
@@ -40,6 +41,13 @@ interface EntryInterface
      * @return mixed
      */
     public function getEntryTitle();
+
+    /**
+     * Get the sort order.
+     *
+     * @return int
+     */
+    public function getSortOrder();
 
     /**
      * Get the title.
@@ -96,6 +104,13 @@ interface EntryInterface
      * @return string
      */
     public function getTableName();
+
+    /**
+     * Get related translations.
+     *
+     * @return EloquentCollection
+     */
+    public function getTranslations();
 
     /**
      * Get the translations table name.
@@ -161,6 +176,22 @@ interface EntryInterface
      * @return AssignmentCollection
      */
     public function getAssignments();
+
+    /**
+     * Get field slugs for all assignments.
+     *
+     * @return array
+     */
+    public function getAssignmentFieldSlugs();
+
+    /**
+     * Get all assignments of the
+     * provided field type namespace.
+     *
+     * @param $fieldType
+     * @return AssignmentCollection
+     */
+    public function getAssignmentsByFieldType($fieldType);
 
     /**
      * Get an assignment by field slug.

@@ -68,11 +68,32 @@ interface StreamInterface
     public function getDescription();
 
     /**
-     * Get the translatable flag.
+     * Get the config.
+     *
+     * @return array
+     */
+    public function getConfig();
+
+    /**
+     * Get the locked flag.
      *
      * @return bool
      */
-    public function isTranslatable();
+    public function isLocked();
+
+    /**
+     * Get the hidden flag.
+     *
+     * @return bool
+     */
+    public function isHidden();
+
+    /**
+     * Get the sortable flag.
+     *
+     * @return bool
+     */
+    public function isSortable();
 
     /**
      * Get the trashable flag.
@@ -80,6 +101,13 @@ interface StreamInterface
      * @return bool
      */
     public function isTrashable();
+
+    /**
+     * Get the translatable flag.
+     *
+     * @return bool
+     */
+    public function isTranslatable();
 
     /**
      * Get the title column.

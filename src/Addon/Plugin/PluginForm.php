@@ -67,7 +67,7 @@ class PluginForm
      * @param array $parameters
      * @return FormBuilder
      */
-    public function build(array $parameters)
+    public function build(array $parameters = [])
     {
         return $this->resolve($parameters)->build();
     }
@@ -78,7 +78,7 @@ class PluginForm
      * @param array $parameters
      * @return FormBuilder
      */
-    public function make(array $parameters)
+    public function make(array $parameters = [])
     {
         return $this->resolve($parameters)->make();
     }
@@ -89,7 +89,7 @@ class PluginForm
      * @param array $parameters
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function render(array $parameters)
+    public function render(array $parameters = [])
     {
         return $this->resolve($parameters)->render();
     }
@@ -101,27 +101,21 @@ class PluginForm
      * @param array $parameters
      * @return FormBuilder
      */
-    public function resolve(array $parameters)
+    public function resolve(array $parameters = [])
     {
+        $parameters = $cache = $this->setDefaults($parameters);
+
         $parameters['key'] = md5(json_encode($parameters));
 
-        if (!$builder = array_get($parameters, 'builder')) {
-            if (!$model = array_get($parameters, 'model')) {
+        /* @var FormBuilder $builder */
+        $builder = $this->container->make(array_get($parameters, 'builder'));
 
-                $stream    = ucfirst(camel_case(array_get($parameters, 'stream')));
-                $namespace = ucfirst(camel_case(array_get($parameters, 'namespace')));
-
-                $model = 'Anomaly\Streams\Platform\Model\\' . $namespace . '\\' . $namespace . $stream . 'EntryModel';
-
-                array_set($parameters, 'model', $model);
-            }
-
-            $builder = 'Anomaly\Streams\Platform\Ui\Form\FormBuilder';
+        // Merge options if not a handler.
+        if (is_array($options = $builder->getOptions())) {
+            $builder->setOptions(array_replace_recursive($options, array_pull($parameters, 'options', [])));
         }
 
-        /* @var FormBuilder $builder */
-        $builder = $this->container->make($builder);
-
+        // Hydrate the builder.
         $this->hydrator->hydrate($builder, $parameters);
 
         // Use the core form handler if none set.
@@ -134,8 +128,62 @@ class PluginForm
             $builder->setFormOption('redirect', $this->request->fullUrl());
         }
 
-        $this->cache->forever('form::' . $parameters['key'], $parameters);
+        $this->cache->forever('form::' . $parameters['key'], $cache);
 
         return $builder;
+    }
+
+    /**
+     * Set the default parameters.
+     *
+     * @param array $parameters
+     * @return array
+     */
+    protected function setDefaults(array $parameters)
+    {
+
+        /**
+         * Set the default builder and model based
+         * a stream and namespace parameter provided.
+         */
+        if (!$builder = array_get($parameters, 'builder')) {
+            if (!$model = array_get($parameters, 'model')) {
+
+                $stream    = ucfirst(camel_case(array_get($parameters, 'stream')));
+                $namespace = ucfirst(camel_case(array_get($parameters, 'namespace')));
+
+                $model = 'Anomaly\Streams\Platform\Model\\' . $namespace . '\\' . $namespace . $stream . 'EntryModel';
+
+                array_set($parameters, 'model', $model);
+            }
+
+            array_set($parameters, 'builder', 'Anomaly\Streams\Platform\Ui\Form\FormBuilder');
+        }
+
+        /**
+         * Set some default options.
+         */
+        array_set(
+            $parameters,
+            'options.panel_class',
+            array_get($parameters, 'options.panel_class', 'section')
+        );
+        array_set(
+            $parameters,
+            'options.panel_body_class',
+            array_get($parameters, 'options.panel_body_class', 'section-body')
+        );
+        array_set(
+            $parameters,
+            'options.panel_title_class',
+            array_get($parameters, 'options.panel_title_class', 'section-title')
+        );
+        array_set(
+            $parameters,
+            'options.panel_heading_class',
+            array_get($parameters, 'options.panel_heading_class', 'section-heading')
+        );
+
+        return $parameters;
     }
 }

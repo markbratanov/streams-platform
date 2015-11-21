@@ -9,11 +9,13 @@ use Anomaly\Streams\Platform\Field\Contract\FieldInterface;
 use Anomaly\Streams\Platform\Model\EloquentModel;
 use Anomaly\Streams\Platform\Stream\Contract\StreamInterface;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Robbo\Presenter\PresentableInterface;
 
 /**
  * Class EntryModel
  *
+ * @method        Builder sorted()
  * @link    http://anomaly.is/streams-platform
  * @author  AnomalyLabs, Inc. <hello@anomaly.is>
  * @author  Ryan Thompson <ryan@anomaly.is>
@@ -46,6 +48,39 @@ class EntryModel extends EloquentModel implements EntryInterface, PresentableInt
     protected $stream = [];
 
     /**
+     * Boot the model
+     */
+    protected static function boot()
+    {
+        $instance = new static;
+
+        $class    = get_class($instance);
+        $events   = $instance->getObservableEvents();
+        $observer = substr($class, 0, -5) . 'Observer';
+
+        if ($events && class_exists($observer)) {
+            self::observe(app($observer));
+        }
+
+        if ($events && !static::$dispatcher->hasListeners('eloquent.' . array_shift($events) . ': ' . $class)) {
+            self::observe(EntryObserver::class);
+        }
+
+        parent::boot();
+    }
+
+    /**
+     * Sort the query.
+     *
+     * @param Builder $builder
+     * @param string  $direction
+     */
+    public function scopeSorted(Builder $builder, $direction = 'asc')
+    {
+        $builder->orderBy('sort_order', $direction);
+    }
+
+    /**
      * Get the ID.
      *
      * @return mixed
@@ -73,6 +108,16 @@ class EntryModel extends EloquentModel implements EntryInterface, PresentableInt
     public function getEntryTitle()
     {
         return $this->getTitle();
+    }
+
+    /**
+     * Get the sort order.
+     *
+     * @return int
+     */
+    public function getSortOrder()
+    {
+        return $this->sort_order;
     }
 
     /**
@@ -106,14 +151,31 @@ class EntryModel extends EloquentModel implements EntryInterface, PresentableInt
         $modifier = $type->getModifier();
 
         if ($assignment->isTranslatable()) {
+
             $entry = $this->translateOrDefault($locale);
+
+            $type->setLocale($locale);
         } else {
             $entry = $this;
         }
 
         $type->setEntry($entry);
 
-        return $modifier->restore($accessor->get());
+        $value = $modifier->restore($accessor->get());
+
+        if (
+            $value === null &&
+            $assignment->isTranslatable() &&
+            $assignment->isRequired() &&
+            $translation = $this->translate()
+        ) {
+
+            $type->setEntry($translation);
+
+            $value = $modifier->restore($accessor->get());
+        }
+
+        return $value;
     }
 
     /**
@@ -173,13 +235,26 @@ class EntryModel extends EloquentModel implements EntryInterface, PresentableInt
      */
     public function getFieldType($fieldSlug)
     {
+        $locale = config('app.locale');
+
         $assignment = $this->getAssignment($fieldSlug);
 
-        if (!$assignment instanceof AssignmentInterface) {
+        if (!$assignment) {
             return null;
         }
 
-        $type = $assignment->getFieldType($this);
+        $type = $assignment->getFieldType();
+
+        if ($assignment->isTranslatable()) {
+
+            $entry = $this->translateOrDefault($locale);
+
+            $type->setLocale($locale);
+        } else {
+            $entry = $this;
+        }
+
+        $type->setEntry($entry);
 
         $type->setValue($this->getFieldValue($fieldSlug));
         $type->setEntry($this);
@@ -211,7 +286,7 @@ class EntryModel extends EloquentModel implements EntryInterface, PresentableInt
      */
     public function setAttribute($key, $value)
     {
-        if (!$this->isKeyALocale($key) && !$this->hasSetMutator($key) && $this->getFieldType($key, $value)) {
+        if (!$this->isKeyALocale($key) && !$this->hasSetMutator($key) && $this->getFieldType($key)) {
             $this->setFieldValue($key, $value);
         } else {
             parent::setAttribute($key, $value);
@@ -365,6 +440,32 @@ class EntryModel extends EloquentModel implements EntryInterface, PresentableInt
     }
 
     /**
+     * Get field slugs for all assignments.
+     *
+     * @return array
+     */
+    public function getAssignmentFieldSlugs()
+    {
+        $assignments = $this->getAssignments();
+
+        return $assignments->fieldSlugs();
+    }
+
+    /**
+     * Get all assignments of the
+     * provided field type namespace.
+     *
+     * @param $fieldType
+     * @return AssignmentCollection
+     */
+    public function getAssignmentsByFieldType($fieldType)
+    {
+        $assignments = $this->getAssignments();
+
+        return $assignments->findAllByFieldType($fieldType);
+    }
+
+    /**
      * Get an assignment by field slug.
      *
      * @param  $fieldSlug
@@ -481,7 +582,10 @@ class EntryModel extends EloquentModel implements EntryInterface, PresentableInt
 
             $fieldType->setEntry($this);
 
-            $fieldType->fire($trigger, array_merge(compact('fieldType', 'entry'), $payload));
+            $payload['entry']     = $this;
+            $payload['fieldType'] = $fieldType;
+
+            $fieldType->fire($trigger, $payload);
         }
     }
 
@@ -541,5 +645,20 @@ class EntryModel extends EloquentModel implements EntryInterface, PresentableInt
     public function newPresenter()
     {
         return $this->getPresenter();
+    }
+
+    /**
+     * Override the __get method.
+     *
+     * @param string $key
+     * @return EntryPresenter|mixed
+     */
+    public function __get($key)
+    {
+        if ($key === 'decorate') {
+            return $this->getPresenter();
+        }
+
+        return parent::__get($key); // TODO: Change the autogenerated stub
     }
 }

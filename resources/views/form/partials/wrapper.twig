@@ -4,7 +4,7 @@
         data-field="{{ field_type.field }}">
 
     <label class="control-label">
-        {{ trans(field_type.object.label)|raw }}
+        {{ field_type.object.label|raw }}
 
         {% if field_type.required %}
             <span class="required">*</span>
@@ -18,7 +18,16 @@
     </label>
 
     {% if field_type.instructions %}
-        <p class="help-block">{{ trans(field_type.instructions)|raw }}</p>
+        <p class="help-block">{{ field_type.instructions|raw }}</p>
+    {% endif %}
+
+    {% if field_type.warning %}
+        <p class="help-block">
+            <span class="text-warning">
+                {{ icon('warning') }}
+                {{ field_type.warning|raw }}
+            </span>
+        </p>
     {% endif %}
 
     {{ field_type.input|raw }}

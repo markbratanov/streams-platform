@@ -14,11 +14,16 @@ return [
     'add'                => 'Add',
     'edit'               => 'Edit',
     'view'               => 'View',
+    'help'               => 'Help',
     'delete'             => 'Delete',
     'create'             => 'Create',
     'cancel'             => 'Cancel',
     'options'            => 'Options',
     'continue'           => 'Continue',
+    'done'               => 'Done',
+    'finish'             => 'Finish',
+    'finished'           => 'Finished',
+    'select'             => 'Select',
     'save'               => 'Save',
     'save_and_edit'      => 'Save & Edit',
     'save_and_exit'      => 'Save & Exit',
@@ -32,5 +37,10 @@ return [
     'settings'           => 'Settings',
     'fields'             => 'Fields',
     'send'               => 'Send',
-    'submit'             => 'Submit'
+    'submit'             => 'Submit',
+    'enable'             => 'Enable',
+    'disable'            => 'Disable',
+    'install'            => 'Install',
+    'uninstall'          => 'Uninstall',
+    'entries'            => 'Entries'
 ];

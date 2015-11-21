@@ -10,8 +10,31 @@ use Composer\Autoload\ClassLoader;
  * @author  Ryan Thompson <ryan@anomaly.is>
  * @package Anomaly\Streams\Platform\Addon
  */
-class AddonLoader extends ClassLoader
+class AddonLoader
 {
+
+    /**
+     * The class loader instance.
+     *
+     * @var ClassLoader
+     */
+    protected $loader;
+
+    /**
+     * Create a new AddonLoader instance.
+     */
+    public function __construct()
+    {
+        foreach (spl_autoload_functions() as $loader) {
+            if ($loader[0] instanceof ClassLoader) {
+                $this->loader = $loader[0];
+            }
+        }
+
+        if (!$this->loader) {
+            throw new \Exception("The ClassLoader could not be found.");
+        }
+    }
 
     /**
      * Load the addon.
@@ -36,15 +59,23 @@ class AddonLoader extends ClassLoader
         }
 
         foreach (array_get($composer['autoload'], 'psr-4', []) as $namespace => $autoload) {
-            parent::addPsr4($namespace, $path . '/' . $autoload, false);
+            $this->loader->addPsr4($namespace, $path . '/' . $autoload, false);
         }
 
         foreach (array_get($composer['autoload'], 'psr-0', []) as $namespace => $autoload) {
-            parent::add($namespace, $path . '/' . $autoload, false);
+            $this->loader->add($namespace, $path . '/' . $autoload, false);
         }
 
         foreach (array_get($composer['autoload'], 'files', []) as $file) {
             include($path . '/' . $file);
         }
+    }
+
+    /**
+     * Register the loader.
+     */
+    public function register()
+    {
+        $this->loader->register();
     }
 }

@@ -46,12 +46,21 @@ class SetActiveSection implements SelfHandling
     {
         $controlPanel = $this->builder->getControlPanel();
         $sections     = $controlPanel->getSections();
+        $menu         = $controlPanel->getMenu();
 
         /**
          * If we already have an active section
          * then we don't need to do this.
          */
         if ($active = $sections->active()) {
+            return;
+        }
+
+        /**
+         * Is we have an active menu then skip
+         * that too because we can't have both.
+         */
+        if ($menu->active()) {
             return;
         }
 
@@ -94,11 +103,25 @@ class SetActiveSection implements SelfHandling
         /**
          * If we have an active section determined
          * then mark it as such.
+         *
+         * @var SectionInterface $active
+         * @var SectionInterface $section
          */
-        if ($active && $active instanceof SectionInterface) {
-            $active->setActive(true);
+        if ($active) {
+            if ($active->getParent()) {
+
+                $active->setActive(true);
+
+                $section = $sections->get($active->getParent(), $sections->first());
+
+                $section->setHighlighted(true);
+
+                $breadcrumbs->put($section->getBreadcrumb() ?: $section->getText(), $section->getHref());
+            } else {
+                $active->setActive(true)->setHighlighted(true);
+            }
         } elseif ($active = $sections->first()) {
-            $active->setActive(true);
+            $active->setActive(true)->setHighlighted(true);
         }
 
         // No active section!

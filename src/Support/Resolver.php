@@ -41,15 +41,17 @@ class Resolver
      *
      * @param        $target
      * @param array  $arguments
-     * @param string $method
+     * @param array  $options
      * @return mixed
      */
-    public function resolve($target, array $arguments = [], $method = 'handle')
+    public function resolve($target, array $arguments = [], array $options = [])
     {
+        $method = array_get($options, 'method', 'handle');
+
         if (is_string($target) && str_contains($target, '@')) {
-            return $this->container->call($target, $arguments);
-        } elseif (is_string($target) && class_implements($target, SelfHandling::class)) {
-            return $this->container->call($target . '@' . $method, $arguments);
+            $target = $this->container->call($target, $arguments);
+        } elseif (is_string($target) && class_exists($target) && class_implements($target, SelfHandling::class)) {
+            $target = $this->container->call($target . '@' . $method, $arguments);
         }
 
         return $target;

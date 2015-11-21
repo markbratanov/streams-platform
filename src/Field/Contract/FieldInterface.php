@@ -57,6 +57,13 @@ interface FieldInterface
     public function getType();
 
     /**
+     * Get the field type value.
+     *
+     * @return string
+     */
+    public function getTypeValue();
+
+    /**
      * Get the configuration.
      *
      * @return mixed
@@ -106,11 +113,4 @@ interface FieldInterface
      * @return FieldInterface
      */
     public function compileStreams();
-
-    /**
-     * Delete related assignments.
-     *
-     * @return FieldInterface
-     */
-    public function deleteAssignments();
 }

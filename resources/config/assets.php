@@ -15,8 +15,24 @@ return [
     | $asset->add('collection.css', 'example::path/to/asset.css');
     |
     */
+
     'paths' => [
         //'example' => 'some/local/path',
         //'s3'      => 'https://region.amazonaws.com/bucket'
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Filters
+    |--------------------------------------------------------------------------
+    |
+    | LESS: "php" or "node"
+    | SCSS: "php" or "ruby"
+    |
+    */
+
+    'filters' => [
+        'less' => 'php',
+        'scss' => 'php'
     ]
 ];

@@ -9,6 +9,7 @@ use Anomaly\Streams\Platform\Ui\Table\Command\PostTable;
 use Anomaly\Streams\Platform\Ui\Table\Command\SetTableResponse;
 use Anomaly\Streams\Platform\Ui\Table\Component\Filter\Contract\FilterInterface;
 use Anomaly\Streams\Platform\Ui\Table\Component\Row\Contract\RowInterface;
+use Anomaly\Streams\Platform\Ui\Table\Component\View\ViewCollection;
 use Anomaly\Streams\Platform\Ui\Table\Contract\TableRepositoryInterface;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -28,6 +29,13 @@ class TableBuilder
 
     use DispatchesJobs;
     use FiresCallbacks;
+
+    /**
+     * The ajax flag.
+     *
+     * @var bool
+     */
+    protected $ajax = false;
 
     /**
      * The table model.
@@ -166,6 +174,29 @@ class TableBuilder
         }
 
         return $this->table->getResponse();
+    }
+
+    /**
+     * Get the ajax flag.
+     *
+     * @return bool
+     */
+    public function isAjax()
+    {
+        return $this->ajax;
+    }
+
+    /**
+     * Set the ajax flag.
+     *
+     * @param $ajax
+     * @return $this
+     */
+    public function setAjax($ajax)
+    {
+        $this->ajax = $ajax;
+
+        return $this;
     }
 
     /**
@@ -380,7 +411,7 @@ class TableBuilder
      */
     public function setOptions(array $options)
     {
-        $this->options = $options;
+        $this->options = array_merge($this->options, $options);
 
         return $this;
     }
@@ -586,6 +617,19 @@ class TableBuilder
     public function getTableViews()
     {
         return $this->table->getViews();
+    }
+
+    /**
+     * Set the table views.
+     *
+     * @param ViewCollection $views
+     * @return $this
+     */
+    public function setTableViews(ViewCollection $views)
+    {
+        $this->table->setViews($views);
+
+        return $this;
     }
 
     /**

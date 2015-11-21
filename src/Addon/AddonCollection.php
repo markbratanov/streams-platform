@@ -25,6 +25,25 @@ class AddonCollection extends Collection
 {
 
     /**
+     * Create a new AddonCollection instance.
+     *
+     * @param array $items
+     */
+    public function __construct($items = [])
+    {
+        /* @var Addon $item */
+        foreach ($items as $key => $item) {
+
+            if (is_object($item)) {
+                $key = $item->getNamespace();
+            }
+
+            $this->items[$key] = $item;
+        }
+    }
+
+
+    /**
      * Return only core addons.
      *
      * @return AddonCollection
@@ -41,6 +60,22 @@ class AddonCollection extends Collection
         }
 
         return self::make($core);
+    }
+
+    /**
+     * Get an addon.
+     *
+     * @param mixed $key
+     * @param null  $default
+     * @return Addon|mixed|null
+     */
+    public function get($key, $default = null)
+    {
+        if (!$addon = parent::get($key, $default)) {
+            return $this->findBySlug($key);
+        }
+
+        return $addon;
     }
 
     /**
@@ -122,7 +157,28 @@ class AddonCollection extends Collection
 
         /* @var Addon $item */
         foreach ($this->items as $item) {
-            if (config($item->getNamespace($key)) !== null) {
+            if ($item->hasConfig($key)) {
+                $addons[] = $item;
+            }
+        }
+
+        return self::make($addons);
+    }
+
+    /**
+     * Return addons only with any of
+     * the provided configuration.
+     *
+     * @param array $keys
+     * @return AddonCollection
+     */
+    public function withAnyConfig(array $keys)
+    {
+        $addons = [];
+
+        /* @var Addon $item */
+        foreach ($this->items as $item) {
+            if ($item->hasAnyConfig($keys)) {
                 $addons[] = $item;
             }
         }

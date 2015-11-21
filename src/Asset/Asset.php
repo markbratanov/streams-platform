@@ -6,7 +6,9 @@ use Anomaly\Streams\Platform\Asset\Filter\CoffeeFilter;
 use Anomaly\Streams\Platform\Asset\Filter\CssMinFilter;
 use Anomaly\Streams\Platform\Asset\Filter\JsMinFilter;
 use Anomaly\Streams\Platform\Asset\Filter\LessFilter;
+use Anomaly\Streams\Platform\Asset\Filter\NodeLessFilter;
 use Anomaly\Streams\Platform\Asset\Filter\ParseFilter;
+use Anomaly\Streams\Platform\Asset\Filter\RubyScssFilter;
 use Anomaly\Streams\Platform\Asset\Filter\ScssFilter;
 use Anomaly\Streams\Platform\Asset\Filter\SeparatorFilter;
 use Anomaly\Streams\Platform\Asset\Filter\StylusFilter;
@@ -15,6 +17,7 @@ use Assetic\Asset\FileAsset;
 use Assetic\Asset\GlobAsset;
 use Assetic\Filter\PhpCssEmbedFilter;
 use Collective\Html\HtmlBuilder;
+use Illuminate\Config\Repository;
 use Illuminate\Filesystem\Filesystem;
 use League\Flysystem\MountManager;
 
@@ -99,25 +102,35 @@ class Asset
     protected $application;
 
     /**
+     * The config repository.
+     *
+     * @var array
+     */
+    protected $config;
+
+    /**
      * Create a new Application instance.
      *
      * @param Application     $application
      * @param ThemeCollection $themes
      * @param MountManager    $manager
-     * @param AssetPaths      $paths
      * @param AssetParser     $parser
+     * @param Repository      $config
+     * @param AssetPaths      $paths
      * @param HtmlBuilder     $html
      */
     public function __construct(
         Application $application,
         ThemeCollection $themes,
         MountManager $manager,
-        AssetPaths $paths,
         AssetParser $parser,
+        Repository $config,
+        AssetPaths $paths,
         HtmlBuilder $html
     ) {
         $this->html        = $html;
         $this->paths       = $paths;
+        $this->config      = $config;
         $this->themes      = $themes;
         $this->parser      = $parser;
         $this->manager     = $manager;
@@ -169,7 +182,7 @@ class Asset
             return $this;
         }
 
-        if (config('app.debug')) {
+        if ($this->config->get('app.debug')) {
             throw new \Exception("Asset [{$file}] does not exist!");
         }
     }
@@ -396,7 +409,11 @@ class Asset
                     break;
 
                 case 'less':
-                    $filter = new LessFilter($this->parser);
+                    if ($this->config->get('streams::assets.filters.less') == 'php') {
+                        $filter = new LessFilter($this->parser);
+                    } else {
+                        $filter = new NodeLessFilter($this->parser);
+                    }
                     break;
 
                 case 'styl':
@@ -404,7 +421,11 @@ class Asset
                     break;
 
                 case 'scss':
-                    $filter = new ScssFilter($this->parser);
+                    if ($this->config->get('streams::assets.filters.scss') == 'php') {
+                        $filter = new ScssFilter($this->parser);
+                    } else {
+                        $filter = new RubyScssFilter($this->parser);
+                    }
                     break;
 
                 case 'coffee':
@@ -527,7 +548,7 @@ class Asset
             return true;
         }
 
-        if (env('APP_DEBUG') && in_array('debug', $filters)) {
+        if (env('APP_DEBUG') && in_array('debug', $this->collectionFilters($collection, $filters))) {
             return true;
         }
 
@@ -643,6 +664,20 @@ class Asset
         }
 
         return $assets;
+    }
+
+    /**
+     * Return the filters used in a collection.
+     *
+     * @param       $collection
+     * @param array $filters
+     * @return array
+     */
+    protected function collectionFilters($collection, array $filters = [])
+    {
+        return array_unique(
+            array_merge($filters, call_user_func_array('array_merge', array_get($this->collections, $collection, [])))
+        );
     }
 
     /**

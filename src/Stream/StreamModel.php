@@ -101,7 +101,7 @@ class StreamModel extends EloquentModel implements StreamInterface
         $streamModel        = new StreamModel();
         $streamTranslations = new EloquentCollection();
 
-        $data['view_options'] = serialize(array_get($data, 'view_options', []));
+        $data['config'] = serialize(array_get($data, 'config', []));
 
         if ($translations = array_pull($data, 'translations')) {
             foreach ($translations as $attributes) {
@@ -180,10 +180,6 @@ class StreamModel extends EloquentModel implements StreamInterface
         $streamModel->assignments = $assignmentsCollection;
 
         self::$store->put($payload, $streamModel);
-
-        $entryModel = $streamModel->getEntryModel();
-
-        $entryModel::observe(EntryObserver::class);
 
         return $streamModel;
     }
@@ -291,13 +287,43 @@ class StreamModel extends EloquentModel implements StreamInterface
     }
 
     /**
-     * Get the translatable flag.
+     * Get the view options.
+     *
+     * @return array
+     */
+    public function getConfig()
+    {
+        return $this->config;
+    }
+
+    /**
+     * Get the locked flag.
      *
      * @return bool
      */
-    public function isTranslatable()
+    public function isLocked()
     {
-        return $this->translatable;
+        return $this->locked;
+    }
+
+    /**
+     * Get the hidden flag.
+     *
+     * @return bool
+     */
+    public function isHidden()
+    {
+        return $this->hidden;
+    }
+
+    /**
+     * Get the sortable flag.
+     *
+     * @return bool
+     */
+    public function isSortable()
+    {
+        return $this->sortable;
     }
 
     /**
@@ -308,6 +334,16 @@ class StreamModel extends EloquentModel implements StreamInterface
     public function isTrashable()
     {
         return $this->trashable;
+    }
+
+    /**
+     * Get the translatable flag.
+     *
+     * @return bool
+     */
+    public function isTranslatable()
+    {
+        return $this->translatable;
     }
 
     /**
@@ -436,18 +472,18 @@ class StreamModel extends EloquentModel implements StreamInterface
      *
      * @param $viewOptions
      */
-    public function setViewOptionsAttribute($viewOptions)
+    public function setConfigAttribute($viewOptions)
     {
-        $this->attributes['view_options'] = serialize($viewOptions);
+        $this->attributes['config'] = serialize($viewOptions);
     }
 
     /**
-     * Unserialize the view options after getting them off the model.
+     * Unserialize the view options.
      *
      * @param  $viewOptions
      * @return mixed
      */
-    public function getViewOptionsAttribute($viewOptions)
+    public function getConfigAttribute($viewOptions)
     {
         return unserialize($viewOptions);
     }
